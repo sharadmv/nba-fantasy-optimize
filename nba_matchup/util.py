@@ -38,43 +38,47 @@ def valid_starters(players):
                                             sum(TEAM_COUNT.values()))):
         yield roster
 
-def visualize_matchup(team1, team2, **kwargs):
+def visualize_matchup(teams, opponent, **kwargs):
     from .sim import simulate_h2h, CATEGORY_NAMES
     num_samples = kwargs.get('num_samples', 1000)
-    cats, points, scores = simulate_h2h(team1.roster,
-                           team2.roster, **kwargs)
-    print("%s's expected score: %f +/- %f" % (team1.manager_name, points.mean(), points.std()))
-    print("Expected categories:")
-    means = cats.mean(axis=1)
-    unique, nums = np.unique(points, return_counts=True)
-    counts = defaultdict(int)
-    counts.update(dict(zip(unique, nums)))
-    winning_prob = sum([counts[p] for p in range(5, 10)]) / num_samples
-    table = [["", team1.manager_name, team2.manager_name]]
-    for i, cat in enumerate(CATEGORY_NAMES):
-        table.append([cat] + list(means[:, i]))
-    print(tabulate(table))
-    print("%s has a %f chance of beating %s" % (
-        team1.manager_name,
-        winning_prob,
-        team2.manager_name,
-    ))
-    fig, ax = plt.subplots()
-    ax.bar(list(range(10)), [counts[p] / num_samples for p in range(10)], align='center',
-           alpha=0.5)
-    ax.set_xlabel("Score")
-    ax.set_xticks(range(10))
-    ax.set_title("%s's probability of scores" % team1.manager_name)
-    fig, ax = plt.subplots()
-    probs = np.concatenate([
-        (cats[0, ..., :-1] > cats[1, ..., :-1]).mean(axis=0),
-        (cats[0, ..., -1:] < cats[1, ..., -1:]).mean(axis=0),
-    ])
-    ax.bar(CATEGORY_NAMES, probs, align='center', alpha=0.5, color=
-           ['green' if p > 0.5 else 'red' for p in probs])
-    ax.set_xlabel("Category")
-    ax.set_ylabel("Probability of Winning")
-    ax.set_ylim([0, 1])
-    ax.set_title("%s vs. %s Simulation" % (team1.manager_name,
-                                           team2.manager_name))
+    fig, ax = plt.subplots(2)
+    bar_width = 0.35
+    for i, team in enumerate(teams):
+        cats, points, scores = simulate_h2h(team.roster,
+                                opponent.roster, **kwargs)
+        print("%s's expected score: %f +/- %f" % (team.manager_name, points.mean(), points.std()))
+        print("Expected categories:")
+        means = cats.mean(axis=1)
+        unique, nums = np.unique(points, return_counts=True)
+        counts = defaultdict(int)
+        counts.update(dict(zip(unique, nums)))
+        winning_prob = sum([counts[p] for p in range(5, 10)]) / num_samples
+        table = [["", team.manager_name, opponent.manager_name]]
+        for j, cat in enumerate(CATEGORY_NAMES):
+            table.append([cat] + list(means[:, j]))
+        print(tabulate(table))
+        print("%s has a %f chance of beating %s" % (
+            team.manager_name,
+            winning_prob,
+            opponent.manager_name,
+        ))
+        ax[0].bar(np.arange(10) + i * 0.1, [counts[p] / num_samples for p
+                                                  in range(10)], 0.1, align='center',
+                    alpha=0.5, label='%s-%u' % (team.manager_name, i))
+        ax[0].set_xlabel("Score")
+        ax[0].set_xticks(range(10))
+        ax[0].set_title("%s's probability of scores" % team.manager_name)
+        probs = np.concatenate([
+            (cats[0, ..., :-1] > cats[1, ..., :-1]).mean(axis=0),
+            (cats[0, ..., -1:] < cats[1, ..., -1:]).mean(axis=0),
+        ])
+        ax[1].bar(np.arange(len(CATEGORY_NAMES)) + i * bar_width, probs, bar_width, align='center', alpha=0.5, color= ['green' if p > 0.5 else 'red' for p in probs])
+        ax[1].set_xticks(np.arange(len(CATEGORY_NAMES)) + bar_width / 2)
+        ax[1].set_xticklabels(CATEGORY_NAMES)
+        ax[1].set_xlabel("Category")
+        ax[1].set_ylabel("Probability of Winning")
+        ax[1].set_ylim([0, 1])
+        ax[1].set_title("%s vs. %s Simulation" % (team.manager_name, opponent.manager_name))
+    ax[0].legend(loc='best')
+    ax[1].legend(loc='best')
     plt.show()

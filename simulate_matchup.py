@@ -23,7 +23,7 @@ def main(team1, team2, num_days, num_samples, week):
         team2 = league.get_matchup(team1, week=week)
     else:
         team2 = league.team_by_owner(team2)
-    visualize_matchup(team1, team2, num_days=num_days, num_samples=num_samples,
+    visualize_matchup([team1], team2, num_days=num_days, num_samples=num_samples,
                       week=week)
 
 if __name__ == "__main__":

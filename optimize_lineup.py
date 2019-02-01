@@ -18,7 +18,8 @@ league = get_league()
 @click.option('--num_samples', type=int, default=50000)
 @click.option('--week', type=int, default=CURRENT_WEEK)
 @click.option('--num_fa', type=int, default=0)
-def main(team1, team2, num_days, num_samples, week, num_fa):
+@click.option('--num_iters', type=int, default=100)
+def main(team1, team2, num_days, num_samples, week, num_fa, num_iters):
     league = get_league()
     print(tabulate([["Team", "Manager"]] + [[t.name, t.manager_name] for t in league.teams]))
     if team1 is None:
@@ -43,23 +44,25 @@ def main(team1, team2, num_days, num_samples, week, num_fa):
     for player, position in team1.roster.positions.items():
         print(player.name, position)
     roster = team1.roster
+    old_roster = roster
     for agent in get_free_agents(num_fa):
         print("Adding", agent)
         roster = roster.add(agent, "BN")
     team1.set_roster(roster)
-    visualize_matchup(team1, team2,
-                      num_days=num_days, num_samples=num_samples,
-                      week=week)
     roster, score = hill_climb(roster, roster_score,
                                ignore_players={team1.roster[16]},
-                               num_steps=100)
+                               num_steps=num_iters)
     print("New roster:", score)
     for player, position in roster.positions.items():
         print(player.name, position)
 
-    team1.set_roster(roster)
-    visualize_matchup(team1, team2,
-                      num_days=num_days, num_samples=num_samples,
+    def team_generator():
+        for r in [old_roster, roster]:
+            team1.set_roster(r)
+            yield team1
+
+    visualize_matchup(team_generator(), team2,
+                      num_days=num_days, num_samples=50000,
                       week=week)
 
 if __name__ == "__main__":
