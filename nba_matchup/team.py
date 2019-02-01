@@ -34,12 +34,11 @@ class Roster(object):
             candidates = []
             while len(candidates) == 0:
                 random_choice = random.choice(useful_players)
-                candidates = [p for p in self.players if
-                            new_positions[random_choice] in p.eligible_positions
-                            and new_positions[p] in random_choice.eligible_positions
-                              and p not in ignore_players]
+                candidates = [p for p in self.players if (
+                    new_positions[random_choice] in p.eligible_positions
+                ) and (new_positions[p] in random_choice.eligible_positions or
+                       new_positions[p] == "BN") and p not in ignore_players and p != random_choice]
             candidate = random.choice(candidates)
-            print("Swapping %s with %s" % (random_choice, candidate))
             new_positions[candidate], new_positions[random_choice] = new_positions[random_choice], new_positions[candidate]
             new_starters = set(p for p in new_positions if new_positions[p] not in
                             {'IL', 'BN'})

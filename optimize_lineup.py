@@ -51,7 +51,7 @@ def main(team1, team2, num_days, num_samples, week, num_fa):
                       num_days=num_days, num_samples=num_samples,
                       week=week)
     roster, score = hill_climb(roster, roster_score,
-                               ignore_players={team1.roster[-1]},
+                               ignore_players={team1.roster[16]},
                                num_steps=100)
     print("New roster:", score)
     for player, position in roster.positions.items():
