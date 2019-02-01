@@ -1,0 +1,23 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+
+[packages]
+yahoo-fantasy-sport = {git = "https://github.com/josuebrunel/yahoo-fantasy-sport",editable = true}
+jupyter = "*"
+nba-matchup = {path = ".",editable = true}
+ipdb = "*"
+pandas = "*"
+tqdm = "*"
+click = "*"
+matplotlib = "*"
+seaborn = "*"
+numpy = "*"
+beautifulsoup4 = "*"
+tabulate = "*"
+
+[requires]
+python_version = "3.6"

@@ -1,0 +1,16 @@
+import datetime
+from yahoo_oauth import OAuth2
+from fantasy_sport import FantasySport
+
+__all__ = ['yfs', 'LEAGUE_KEY', 'CURRENT_WEEK', 'START_DATE']
+
+LEAGUE_KEY = "nba.l.160419"
+
+oauth = OAuth2(None, None, from_file='oauth.json', base_url='https://fantasysports.yahooapis.com/fantasy/v2/')
+yfs = FantasySport(oauth, fmt='json')
+
+response = yfs.get_leagues([LEAGUE_KEY]).json()['fantasy_content']['leagues']['0']['league'][0]
+CURRENT_WEEK = response['current_week']
+START_DATE = datetime.datetime.strptime(response['start_date'], "%Y-%m-%d").date()
+while START_DATE.weekday() != 0:
+    START_DATE -= datetime.timedelta(days=1)
