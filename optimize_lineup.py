@@ -1,3 +1,4 @@
+import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 sns.set(style='white')
@@ -62,8 +63,11 @@ def main(team1, team2, num_days, num_samples, week, num_fa, num_iters):
             yield team1
 
     visualize_matchup(team_generator(), team2,
-                      num_days=num_days, num_samples=50000,
+                      num_days=num_days, num_samples=100000,
                       week=week)
+    team1_stats = team1.roster.stats()[0]
+    with pd.option_context('display.max_rows', None, 'display.max_columns', None):
+        print(team1_stats.groupby("Name").mean().round(2))
 
 if __name__ == "__main__":
     main()
