@@ -41,12 +41,13 @@ def valid_starters(players):
 def visualize_matchup(teams, opponent, **kwargs):
     from .sim import simulate_h2h, CATEGORY_NAMES
     num_samples = kwargs.get('num_samples', 1000)
-    fig, ax = plt.subplots(2)
+    week = kwargs.get('week', None)
+    fig, ax = plt.subplots(1, 2)
     bar_width = 0.35
     projections = []
     for i, team in enumerate(teams):
-        cats, points, scores, projection = simulate_h2h(team.roster,
-                                opponent.roster, **kwargs)
+        cats, points, scores, projection = simulate_h2h(team.roster(week=week),
+                                opponent.roster(week=week), **kwargs)
         print("%s's expected score: %f +/- %f" % (team.manager_name, points.mean(), points.std()))
         print("Expected categories:")
         means = cats.mean(axis=1)
@@ -63,11 +64,12 @@ def visualize_matchup(teams, opponent, **kwargs):
             winning_prob,
             opponent.manager_name,
         ))
-        ax[0].bar(np.arange(10) + i * 0.1, [counts[p] / num_samples for p
+        ax[0].bar(np.arange(10) + i * bar_width, [counts[p] / num_samples for p
                                                   in range(10)], 0.1, align='center',
                     alpha=0.5, label='%s-%u' % (team.manager_name, i))
         ax[0].set_xlabel("Score")
-        ax[0].set_xticks(range(10))
+        ax[0].set_xticks(np.arange(10) + bar_width / 2)
+        ax[0].set_xticklabels(range(10))
         ax[0].set_title("%s's probability of scores" % team.manager_name)
         probs = np.concatenate([
             (cats[0, ..., :-1] > cats[1, ..., :-1]).mean(axis=0),

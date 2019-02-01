@@ -44,6 +44,11 @@ class Roster(object):
                             {'IL', 'BN'})
         return Roster(self.players, new_positions)
 
+    def player_by_name(self, name):
+        for player in self:
+            if name == player.name:
+                return player
+
     def stats(self, num_days=14, base_date=datetime.date.today()):
         if any(s._stats is None for s in self):
             for player, stats in zip(self, get_stats(self,
@@ -78,10 +83,9 @@ class Team(object):
         self._roster = None
         self._stats = {}
 
-    @property
-    def roster(self):
+    def roster(self, week=None):
         if self._roster is None:
-            self._roster = get_roster(self.team_key)
+            self._roster = get_roster(self.team_key, week=week)
         return self._roster
 
     def set_roster(self, roster):
@@ -129,8 +133,8 @@ def get_teams(league_key):
                     team_dict[k] = v
         yield Team.from_dict(team_dict)
 
-def get_roster(team_key):
-    roster_props = yfs.get_teams_roster([team_key]).json()['fantasy_content']['teams']['0']['team']
+def get_roster(team_key, week=None):
+    roster_props = yfs.get_teams_roster([team_key], week=week).json()['fantasy_content']['teams']['0']['team']
     roster = []
     for key, value in roster_props[1]['roster']['0']['players'].items():
         if key == 'count':

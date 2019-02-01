@@ -20,7 +20,9 @@ league = get_league()
 @click.option('--week', type=int, default=CURRENT_WEEK)
 @click.option('--num_fa', type=int, default=0)
 @click.option('--num_iters', type=int, default=100)
-def main(team1, team2, num_days, num_samples, week, num_fa, num_iters):
+@click.option('--ignore_player', type=str, multiple=True)
+def main(team1, team2, num_days, num_samples, week, num_fa, num_iters,
+         ignore_player):
     league = get_league()
     print(tabulate([["Team", "Manager"]] + [[t.name, t.manager_name] for t in league.teams]))
     if team1 is None:
@@ -33,7 +35,7 @@ def main(team1, team2, num_days, num_samples, week, num_fa, num_iters):
         team2 = league.team_by_owner(team2)
     def roster_score(roster):
         cats, points, scores, _ = simulate_h2h(roster,
-                            team2.roster,
+                            team2.roster(week=week),
                             num_days=num_days, num_samples=num_samples,
                             week=week)
         unique, nums = np.unique(points, return_counts=True)
@@ -41,17 +43,19 @@ def main(team1, team2, num_days, num_samples, week, num_fa, num_iters):
         counts.update(dict(zip(unique, nums)))
         winning_prob = sum([counts[p] for p in range(5, 10)]) / num_samples
         return winning_prob
-    print("Current roster:", roster_score(team1.roster))
-    for player, position in team1.roster.positions.items():
+    print("Current roster:", roster_score(team1.roster(week=week)))
+    for player, position in team1.roster(week=week).positions.items():
         print(player.name, position)
-    roster = team1.roster
+    roster = team1.roster(week=week)
     old_roster = roster
     for agent in get_free_agents(num_fa):
         print("Adding", agent)
         roster = roster.add(agent, "BN")
     team1.set_roster(roster)
+    print("Ignoring players:", ignore_player)
     roster, score = hill_climb(roster, roster_score,
-                               ignore_players={team1.roster[16]},
+                               ignore_players={team1.roster(week=week).player_by_name(n)
+                                               for n in ignore_player},
                                num_steps=num_iters)
     print("New roster:", score)
     for player, position in roster.positions.items():
@@ -65,9 +69,8 @@ def main(team1, team2, num_days, num_samples, week, num_fa, num_iters):
     projections = visualize_matchup(team_generator(), team2,
                       num_days=num_days, num_samples=100000,
                       week=week)
-    team1_stats = team1.roster.stats()[0]
     with pd.option_context('display.max_rows', None, 'display.max_columns', None):
-        print(team1_stats.groupby("Name").mean().round(2))
+        print(projections[1][0].round(2))
     import ipdb; ipdb.set_trace()
 
 if __name__ == "__main__":
