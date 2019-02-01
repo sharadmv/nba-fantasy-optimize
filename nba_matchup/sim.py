@@ -13,28 +13,37 @@ IGNORE_POSITIONS = ['BN', 'IL']
 
 def simulate_h2h(roster1, roster2, week=CURRENT_WEEK, num_days=14, num_samples=10000):
     teams = [roster1, roster2]
-    results = []
     base = START_DATE + datetime.timedelta(days=7 * (week - 1))
+    scores, projections = [], []
     for team in teams:
         team_stats, player_games = team.stats(num_days, base_date=base)
-        team_stats = team_stats[(team_stats["GP"] > 0) & (team_stats["Position"] != "BN") & (team_stats["Position"] != "IL")]
+        valid_players = set(team_stats[(team_stats["GP"] > 0) &
+                                              (team_stats["Position"] != "BN")
+                                              & (team_stats["Position"] !=
+                                                 "IL")]['Name'])
         mean_stats = team_stats.groupby("Name").mean()
-        names = set(team_stats["Name"])
-        num_games = [len(p) for p, player in zip(player_games, team) if player.name in names]
-        mean_stats["Num Games"] = num_games
-        std_stats = team_stats.groupby("Name").std(ddof=0)
-        std_stats["Num Games"] = np.zeros_like(num_games)
-        results.append((mean_stats, std_stats))
-    scores = [simulate_team(team, num_samples=num_samples) for team in results]
-    cats, points = score(*scores)
-    return cats, points, scores
+        num_games = [(player, len(p)) for p, player in zip(player_games,
+                                                         team.players)]
+        for player, num_game in num_games:
+            mean_stats.at[player.name, "Num Games"] = num_game
+        std_stats = team_stats.groupby("Name").std(ddof=1)
+        for player, num_game in num_games:
+            std_stats.at[player.name, "Num Games"] = 0
+        score, projection = projected_stats((mean_stats, std_stats), valid_players, num_samples=num_samples)
+        valid_index = np.arange(len(mean_stats.index))[mean_stats.index.isin(valid_players)]
+        scores.append(score[:, valid_index])
+        projections.append(projection)
+    cats, points = score_teams(*scores)
+    return cats, points, scores, projections
 
-def simulate_team(team, num_samples=100):
+def projected_stats(team, valid_players, num_samples=100):
     sample = np.random.normal(loc=np.tile(team[0][CATS].mul(team[0]["Num Games"], axis=0) , [num_samples, 1, 1]),
                               scale=np.tile(team[1][CATS].mul(team[0]["Num Games"], axis=0), [num_samples, 1, 1]))
-    return sample
+    projected = team[0].copy()
+    projected[CATS] = sample.mean(axis=0)
+    return sample, projected
 
-def score(team1, team2):
+def score_teams(team1, team2):
     cats = []
     for team in [team1, team2]:
         team = team.sum(axis=1)

@@ -32,7 +32,7 @@ def main(team1, team2, num_days, num_samples, week, num_fa, num_iters):
     else:
         team2 = league.team_by_owner(team2)
     def roster_score(roster):
-        cats, points, scores = simulate_h2h(roster,
+        cats, points, scores, _ = simulate_h2h(roster,
                             team2.roster,
                             num_days=num_days, num_samples=num_samples,
                             week=week)
@@ -62,12 +62,13 @@ def main(team1, team2, num_days, num_samples, week, num_fa, num_iters):
             team1.set_roster(r)
             yield team1
 
-    visualize_matchup(team_generator(), team2,
+    projections = visualize_matchup(team_generator(), team2,
                       num_days=num_days, num_samples=100000,
                       week=week)
     team1_stats = team1.roster.stats()[0]
     with pd.option_context('display.max_rows', None, 'display.max_columns', None):
         print(team1_stats.groupby("Name").mean().round(2))
+    import ipdb; ipdb.set_trace()
 
 if __name__ == "__main__":
     main()

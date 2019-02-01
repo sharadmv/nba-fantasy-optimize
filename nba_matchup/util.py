@@ -43,8 +43,9 @@ def visualize_matchup(teams, opponent, **kwargs):
     num_samples = kwargs.get('num_samples', 1000)
     fig, ax = plt.subplots(2)
     bar_width = 0.35
+    projections = []
     for i, team in enumerate(teams):
-        cats, points, scores = simulate_h2h(team.roster,
+        cats, points, scores, projection = simulate_h2h(team.roster,
                                 opponent.roster, **kwargs)
         print("%s's expected score: %f +/- %f" % (team.manager_name, points.mean(), points.std()))
         print("Expected categories:")
@@ -79,6 +80,8 @@ def visualize_matchup(teams, opponent, **kwargs):
         ax[1].set_ylabel("Probability of Winning")
         ax[1].set_ylim([0, 1])
         ax[1].set_title("%s vs. %s Simulation" % (team.manager_name, opponent.manager_name))
+        projections.append(projection)
     ax[0].legend(loc='best')
     ax[1].legend(loc='best')
     plt.show()
+    return projections
