@@ -48,12 +48,13 @@ class Player(object):
     def stats(self):
         if self._stats is None:
             raise Exception("Haven't computed stats yet")
-        return pd.DataFrame(
+        df = pd.DataFrame(
             data=[[self.name, self.eligible_positions, self.selected_position, date] + s.values() for
                   date, s
                   in self._stats[0].items()],
             columns=['Name', 'Eligible Positions', 'Position', 'Date'] + STATS
-        ), self._stats[1]
+        )
+        return df, self._stats[1]
 
     def set_stats(self, stats):
         self._stats = stats
