@@ -33,8 +33,9 @@ def ev(cats, points, scores, num_samples):
 @click.option('--ignore_player', type=str, multiple=True)
 @click.option('--half_life', type=float, default=14)
 @click.option('--metric', type=str, default='winning_probability')
+@click.option('--ignore_injured', is_flag=True)
 def main(team1, team2, num_days, num_samples, week, num_fa, num_iters,
-         ignore_player, half_life, metric):
+         ignore_player, half_life, metric, ignore_injured):
     league = get_league()
     decay_rate = np.log(2) / half_life
     if team1 is None:
@@ -86,7 +87,8 @@ def main(team1, team2, num_days, num_samples, week, num_fa, num_iters,
     team1.set_roster(roster)
     print("Ignoring players:", ", ".join(ignore_player))
     for roster, score in hill_climb(roster, roster_score, ignore_players={team1.roster(week=week).player_by_name(n) for n in ignore_player},
-                                    num_steps=num_iters):
+                                    num_steps=num_iters,
+                                    ignore_injured=ignore_injured):
         pass
     print("%s's optimized roster:" % team1.manager_name, score)
     print(tabulate([

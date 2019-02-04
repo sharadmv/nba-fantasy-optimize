@@ -24,7 +24,7 @@ class Roster(object):
     def add(self, player, position):
         return Roster(self.players + [player], {player: position, **self.positions})
 
-    def random_swap(self, ignore_players=set()):
+    def random_swap(self, ignore_players=set(), ignore_injured=False):
         new_positions = self.positions.copy()
         starters = set(p for p in new_positions if new_positions[p] not in {'IL', 'BN'})
         new_starters = starters
@@ -39,7 +39,9 @@ class Roster(object):
                 candidates = [p for p in self.players if (
                     new_positions[random_choice] in p.eligible_positions
                 ) and (new_positions[p] in random_choice.eligible_positions or
-                       new_positions[p] == "BN") and p not in ignore_players and p != random_choice]
+                       new_positions[p] == "BN") and p not in ignore_players
+                    and p != random_choice
+                and (not ignore_injured or p.status != "INJ")]
             candidate = random.choice(candidates)
             new_positions[candidate], new_positions[random_choice] = new_positions[random_choice], new_positions[candidate]
             new_starters = set(p for p in new_positions if new_positions[p] not in
