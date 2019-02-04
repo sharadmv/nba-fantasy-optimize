@@ -19,6 +19,7 @@ numpy = "*"
 beautifulsoup4 = "*"
 tabulate = "*"
 pyfiglet = "*"
+yaspin = "*"
 
 [requires]
 python_version = "3.6"

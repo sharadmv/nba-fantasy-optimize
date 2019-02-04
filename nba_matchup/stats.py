@@ -1,3 +1,4 @@
+from yaspin import yaspin
 import requests
 import pandas as pd
 from bs4 import BeautifulSoup
@@ -92,35 +93,36 @@ def get_stat_day(date, player_keys):
 SCHEDULE_URL = "https://sports.yahoo.com/site/api/resource/sports.team.schedule;count=250;sched_state_alias=current_with_postseason;team_key={team_key}"
 STATS_URL = "https://graphite-secure.sports.yahoo.com/v1/query/shangrila/gameLogBasketball?lang=en-US&playerId={player_key}&season=2018"
 
-def get_all_stats(player_key, team_key):
-    player_key = "nba" + player_key[3:]
-    team_key = "nba" + team_key[3:]
-    response = requests.get(STATS_URL.format(player_key=player_key)).json()
-    results = response['data']['players'][0]['playerGameStats']
-    games = {}
-    for game in results:
-        game_date = datetime.datetime.strptime(game['game']['startTime'][:10], "%Y-%m-%d").date()
-        stats = {}
-        for stat in game['stats']:
-            if stat['statId'] in STAT_MAP:
-                try:
-                    stats[STAT_MAP[stat['statId']]] = float(stat['value'])
-                except:
-                    stats[STAT_MAP[stat['statId']]] = stat['value']
-        stats["GP"] = 1.
-        games[game_date] = stats
-    response = requests.get(SCHEDULE_URL.format(team_key=team_key)).json()
-    results = response['service']['schedule']['games']
-    dates = set()
-    for game in results:
-        dates.add(datetime.datetime.strptime(game[6:-2], "%Y%m%d").date())
-    return games, dates
+def get_all_stats(player_key, team_key, player_name):
+    with yaspin(text="Getting stats for %s" % player_name, color='cyan'):
+        player_key = "nba" + player_key[3:]
+        team_key = "nba" + team_key[3:]
+        response = requests.get(STATS_URL.format(player_key=player_key)).json()
+        results = response['data']['players'][0]['playerGameStats']
+        games = {}
+        for game in results:
+            game_date = datetime.datetime.strptime(game['game']['startTime'][:10], "%Y-%m-%d").date()
+            stats = {}
+            for stat in game['stats']:
+                if stat['statId'] in STAT_MAP:
+                    try:
+                        stats[STAT_MAP[stat['statId']]] = float(stat['value'])
+                    except:
+                        stats[STAT_MAP[stat['statId']]] = stat['value']
+            stats["GP"] = 1.
+            games[game_date] = stats
+        response = requests.get(SCHEDULE_URL.format(team_key=team_key)).json()
+        results = response['service']['schedule']['games']
+        dates = set()
+        for game in results:
+            dates.add(datetime.datetime.strptime(game[6:-2], "%Y%m%d").date())
+        return games, dates
 
 def convert_stat(stat):
     return Stats.from_dict(stat)
 
 def get_stats(players, base_date=datetime.date.today(), num_days=7, num_threads=10):
-    player_info = [(p.player_key, p.team_key) for p in players]
+    player_info = [(p.player_key, p.team_key, p.name) for p in players]
     base = base_date
     date_list = set([min(base, datetime.date.today()) - datetime.timedelta(days=x + 1) for x in range(num_days)])
     week_dates = set([base + datetime.timedelta(days=x) for x in range(7)])

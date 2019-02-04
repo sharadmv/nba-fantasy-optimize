@@ -1,3 +1,5 @@
+from yaspin import yaspin
+
 from .yfs import yfs, LEAGUE_KEY, CURRENT_WEEK
 from .team import get_teams
 
@@ -29,19 +31,20 @@ def get_league(league_key=LEAGUE_KEY):
 
 
 def get_matchups(team_key):
-    matchups = (
-        yfs.get_teams_matchups([team_key]).json()
-        ['fantasy_content']['teams']['0']['team'][1]['matchups']
-    )
-    for key, value in matchups.items():
-        if key == 'count':
-            continue
-        week = value['matchup']['week']
-        team_props = value['matchup']['0']['teams']['1']['team']
-        team_dict = {}
-        for prop in team_props[0]:
-            if isinstance(prop, dict):
-                for k, v in prop.items():
-                    team_dict[k] = v
-        matchup = team_dict['team_key']
-        yield int(week), matchup
+    with yaspin(text="Fetching matchup", color='cyan'):
+        matchups = (
+            yfs.get_teams_matchups([team_key]).json()
+            ['fantasy_content']['teams']['0']['team'][1]['matchups']
+        )
+        for key, value in matchups.items():
+            if key == 'count':
+                continue
+            week = value['matchup']['week']
+            team_props = value['matchup']['0']['teams']['1']['team']
+            team_dict = {}
+            for prop in team_props[0]:
+                if isinstance(prop, dict):
+                    for k, v in prop.items():
+                        team_dict[k] = v
+            matchup = team_dict['team_key']
+            yield int(week), matchup

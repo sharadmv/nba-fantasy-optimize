@@ -1,6 +1,7 @@
 import random
 import datetime
 import pandas as pd
+from yaspin import yaspin
 
 from .yfs import yfs, CURRENT_WEEK
 from .player import Player
@@ -126,31 +127,33 @@ class Team(object):
         )
 
 def get_teams(league_key):
-    teams_json = yfs.get_leagues_teams([league_key]).json()
-    for key, value in teams_json['fantasy_content']['leagues']['0']['league'][1]['teams'].items():
-        if key == 'count':
-            continue
-        team_props = value['team'][0]
-        team_dict = {}
-        for prop in team_props:
-            if isinstance(prop, dict):
-                for k, v in prop.items():
-                    team_dict[k] = v
-        yield Team.from_dict(team_dict)
+    with yaspin(text="Fetching teams", color='cyan'):
+        teams_json = yfs.get_leagues_teams([league_key]).json()
+        for key, value in teams_json['fantasy_content']['leagues']['0']['league'][1]['teams'].items():
+            if key == 'count':
+                continue
+            team_props = value['team'][0]
+            team_dict = {}
+            for prop in team_props:
+                if isinstance(prop, dict):
+                    for k, v in prop.items():
+                        team_dict[k] = v
+            yield Team.from_dict(team_dict)
 
 def get_roster(team_key, week=None):
-    roster_props = yfs.get_teams_roster([team_key], week=week).json()['fantasy_content']['teams']['0']['team']
-    roster = []
-    for key, value in roster_props[1]['roster']['0']['players'].items():
-        if key == 'count':
-            continue
-        player_dict = {}
-        for prop in value['player'][0]:
-            if isinstance(prop, dict):
-                for k, v in prop.items():
-                    player_dict[k] = v
-        player_dict['selected_position'] = (
-            value['player'][1]['selected_position'][1]['position']
-        )
-        roster.append(Player.from_dict(player_dict))
-    return Roster(roster, {p: p.selected_position for p in roster})
+    with yaspin(text="Fetching team rosters", color='cyan'):
+        roster_props = yfs.get_teams_roster([team_key], week=week).json()['fantasy_content']['teams']['0']['team']
+        roster = []
+        for key, value in roster_props[1]['roster']['0']['players'].items():
+            if key == 'count':
+                continue
+            player_dict = {}
+            for prop in value['player'][0]:
+                if isinstance(prop, dict):
+                    for k, v in prop.items():
+                        player_dict[k] = v
+            player_dict['selected_position'] = (
+                value['player'][1]['selected_position'][1]['position']
+            )
+            roster.append(Player.from_dict(player_dict))
+        return Roster(roster, {p: p.selected_position for p in roster})
