@@ -38,7 +38,7 @@ def valid_starters(players):
                                             sum(TEAM_COUNT.values()))):
         yield roster
 
-def visualize_matchup(teams, opponent, **kwargs):
+def visualize_matchup(teams, opponent, show_plots=True, **kwargs):
     from .sim import simulate_h2h, CATEGORY_NAMES
     num_samples = kwargs.get('num_samples', 1000)
     week = kwargs.get('week', None)
@@ -46,6 +46,7 @@ def visualize_matchup(teams, opponent, **kwargs):
     bar_width = 0.35
     projections = []
     for i, team in enumerate(teams):
+        print("===========================================")
         cats, points, scores, projection = simulate_h2h(team.roster(week=week),
                                 opponent.roster(week=week), **kwargs)
         print("%s's expected score: %f +/- %f" % (team.manager_name, points.mean(), points.std()))
@@ -75,7 +76,12 @@ def visualize_matchup(teams, opponent, **kwargs):
         ax[0].set_xticks(np.arange(10) + bar_width / 2)
         ax[0].set_xticklabels(range(10))
         ax[0].set_title("%s's probability of scores" % team.manager_name)
-        ax[1].bar(np.arange(len(CATEGORY_NAMES)) + i * bar_width, probs, bar_width, align='center', alpha=0.5, color= ['green' if p > 0.5 else 'red' for p in probs])
+        ax[1].bar(np.arange(len(CATEGORY_NAMES)) + i * bar_width, probs,
+                  bar_width, align='center', alpha=0.5, color= ['green' if p >
+                                                                0.5 else 'red'
+                                                                for p in
+                                                                probs],
+                  label='%s-%u' % (team.manager_name, i))
         ax[1].set_xticks(np.arange(len(CATEGORY_NAMES)) + bar_width / 2)
         ax[1].set_xticklabels(CATEGORY_NAMES)
         ax[1].set_xlabel("Category")
@@ -85,5 +91,6 @@ def visualize_matchup(teams, opponent, **kwargs):
         projections.append(projection)
     ax[0].legend(loc='best')
     ax[1].legend(loc='best')
-    plt.show()
+    if show_plots:
+        plt.show()
     return projections
