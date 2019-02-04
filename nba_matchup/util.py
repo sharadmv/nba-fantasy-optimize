@@ -55,9 +55,13 @@ def visualize_matchup(teams, opponent, **kwargs):
         counts = defaultdict(int)
         counts.update(dict(zip(unique, nums)))
         winning_prob = sum([counts[p] for p in range(5, 10)]) / num_samples
+        probs = np.concatenate([
+            (cats[0, ..., :-1] > cats[1, ..., :-1]).mean(axis=0),
+            (cats[0, ..., -1:] < cats[1, ..., -1:]).mean(axis=0),
+        ])
         table = [["", team.manager_name, opponent.manager_name]]
         for j, cat in enumerate(CATEGORY_NAMES):
-            table.append([cat] + list(means[:, j]))
+            table.append([cat] + list(means[:, j]) + [probs[..., j]])
         print(tabulate(table))
         print("%s has a %f chance of beating %s" % (
             team.manager_name,
@@ -71,10 +75,6 @@ def visualize_matchup(teams, opponent, **kwargs):
         ax[0].set_xticks(np.arange(10) + bar_width / 2)
         ax[0].set_xticklabels(range(10))
         ax[0].set_title("%s's probability of scores" % team.manager_name)
-        probs = np.concatenate([
-            (cats[0, ..., :-1] > cats[1, ..., :-1]).mean(axis=0),
-            (cats[0, ..., -1:] < cats[1, ..., -1:]).mean(axis=0),
-        ])
         ax[1].bar(np.arange(len(CATEGORY_NAMES)) + i * bar_width, probs, bar_width, align='center', alpha=0.5, color= ['green' if p > 0.5 else 'red' for p in probs])
         ax[1].set_xticks(np.arange(len(CATEGORY_NAMES)) + bar_width / 2)
         ax[1].set_xticklabels(CATEGORY_NAMES)

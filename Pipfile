@@ -18,6 +18,7 @@ seaborn = "*"
 numpy = "*"
 beautifulsoup4 = "*"
 tabulate = "*"
+pyfiglet = "*"
 
 [requires]
 python_version = "3.6"

@@ -10,4 +10,4 @@ def hill_climb(roster, score, num_steps = 1000, ignore_players=set()):
         if candidate_score > current_score:
             print("Found a better roster:", candidate_score)
             roster, current_score = candidate_roster, candidate_score
-    return roster, current_score
+            yield roster, current_score

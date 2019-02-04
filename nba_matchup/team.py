@@ -33,7 +33,9 @@ class Roster(object):
                                 if new_positions[p] not in {'IL', 'BN'})
             candidates = []
             while len(candidates) == 0:
-                random_choice = random.choice(useful_players)
+                random_choice = None
+                while random_choice is None or random_choice in ignore_players:
+                    random_choice = random.choice(useful_players)
                 candidates = [p for p in self.players if (
                     new_positions[random_choice] in p.eligible_positions
                 ) and (new_positions[p] in random_choice.eligible_positions or
