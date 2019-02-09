@@ -16,8 +16,10 @@ def simulate_h2h(roster1, roster2, week=CURRENT_WEEK, num_days=14,
     teams = [roster1, roster2]
     base = START_DATE + datetime.timedelta(days=7 * (week - 1))
     scores, projections = [], []
+    week_length = 14 if week == 18 else 7
     for team in teams:
-        team_stats, player_games = team.stats(num_days, base_date=base)
+        team_stats, player_games = team.stats(num_days, base_date=base,
+                                              week_length=week_length)
         valid_players = set(team_stats[(team_stats["GP"] > 0) &
                                               (team_stats["Position"] != "BN")
                                               & (team_stats["Position"] !=

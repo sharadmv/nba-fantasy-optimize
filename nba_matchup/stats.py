@@ -121,11 +121,11 @@ def get_all_stats(player_key, team_key, player_name):
 def convert_stat(stat):
     return Stats.from_dict(stat)
 
-def get_stats(players, base_date=datetime.date.today(), num_days=7, num_threads=10):
+def get_stats(players, base_date=datetime.date.today(), num_days=7, num_threads=10, week_length=7):
     player_info = [(p.player_key, p.team_key, p.name) for p in players]
     base = base_date
     date_list = set([min(base, datetime.date.today()) - datetime.timedelta(days=x + 1) for x in range(num_days)])
-    week_dates = set([base + datetime.timedelta(days=x) for x in range(7)])
+    week_dates = set([base + datetime.timedelta(days=x) for x in range(week_length)])
     pool = Pool(num_threads)
     game_stats = pool.starmap(get_all_stats, player_info)
     date_stats, games = [], []

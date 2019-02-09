@@ -54,11 +54,12 @@ class Roster(object):
             if name == player.name:
                 return player
 
-    def stats(self, num_days=14, base_date=datetime.date.today()):
+    def stats(self, num_days=14, base_date=datetime.date.today(), week_length=7):
         if any(s._stats is None for s in self):
             for player, stats in zip(self, get_stats(self,
                                                      num_days=num_days,
-                                                     base_date=base_date)):
+                                                     base_date=base_date,
+                                                     week_length=week_length)):
                 player.set_stats(stats)
         stats = []
         for player in self:
