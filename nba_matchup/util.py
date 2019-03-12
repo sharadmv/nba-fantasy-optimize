@@ -94,3 +94,15 @@ def visualize_matchup(teams, opponent, show_plots=True, **kwargs):
     if show_plots:
         plt.show()
     return projections
+
+def print_roster(roster, include_bench=False, include_injured=False):
+    ignore = {'BN', 'IL'}
+    if include_bench:
+        ignore.remove("BN")
+    if include_injured:
+        ignore.remove("IL")
+    print(tabulate([
+        [position, player.name] for player, position in
+        roster.positions.items() if position not in ignore
+    ]))
+

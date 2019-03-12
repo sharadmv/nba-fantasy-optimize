@@ -33,7 +33,7 @@ STATS = list(STAT_MAP.values()) + [
 class Stats(object):
 
     def __init__(self, stats):
-        self.stats = stats.items()
+        self.stats = list(stats.items())
         self.mapped_stats = stats
 
     def __getitem__(self, stat):

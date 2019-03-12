@@ -10,6 +10,27 @@ from .util import valid_starters
 
 __all__ = ['get_teams']
 
+TEAM = {
+    'G': 1,
+    'SG': 1,
+    'PG': 1,
+    'F': 1,
+    'SF': 1,
+    'PF': 1,
+    'C': 2,
+    'Util': 2
+}
+
+def get_open_positions(roster_positions):
+    counts = TEAM.copy()
+    for player, position in roster_positions.items():
+        if position in {"BN", "IL"}:
+            continue
+        counts[position] -= 1
+    for position, count in counts.items():
+        if count > 0:
+            yield position
+
 class Roster(object):
 
     def __init__(self, players, positions):
@@ -22,29 +43,50 @@ class Roster(object):
     def __iter__(self):
         yield from self.players
 
+    def remove(self, player):
+        return Roster([p for p in self.players if p != player],
+                      {k: p for k, p in self.positions.items() if k != player})
+    def copy(self):
+        return Roster(self.players[:], {**self.positions})
+
     def add(self, player, position):
         return Roster(self.players + [player], {player: position, **self.positions})
 
     def random_swap(self, ignore_players=set(), ignore_injured=False):
         new_positions = self.positions.copy()
         starters = set(p for p in new_positions if new_positions[p] not in {'IL', 'BN'})
+        open_positions = set(get_open_positions(new_positions))
         new_starters = starters
         while starters == new_starters:
             useful_players = list(p for p in self.players
                                 if new_positions[p] not in {'IL', 'BN'})
+            if len(open_positions) > 0:
+                useful_players += [()]
             candidates = []
             while len(candidates) == 0:
                 random_choice = None
                 while random_choice is None or random_choice in ignore_players:
                     random_choice = random.choice(useful_players)
-                candidates = [p for p in self.players if (
-                    new_positions[random_choice] in p.eligible_positions
-                ) and (new_positions[p] in random_choice.eligible_positions or
-                       new_positions[p] == "BN") and p not in ignore_players
-                    and p != random_choice
-                and (not ignore_injured or p.status != "INJ")]
+                if random_choice != ():
+                    candidates = [p for p in self.players if (
+                        new_positions[random_choice] in p.eligible_positions
+                    ) and (new_positions[p] in random_choice.eligible_positions or
+                        new_positions[p] == "BN") and p not in ignore_players
+                        and p != random_choice
+                    and (not ignore_injured or p.status != "INJ")] + [None]
+                else:
+                    candidates = [p for p in self.players if
+                                  (len(p.eligible_positions & open_positions) > 0 and
+                        new_positions[p] == "BN") and p not in ignore_players
+                    and (not ignore_injured or p.status != "INJ")]
             candidate = random.choice(candidates)
-            new_positions[candidate], new_positions[random_choice] = new_positions[random_choice], new_positions[candidate]
+            if candidate is None:
+                new_positions[random_choice] = "BN"
+            else:
+                if random_choice == ():
+                    new_positions[candidate] = random.choice(list(open_positions & candidate.eligible_positions))
+                else:
+                    new_positions[candidate], new_positions[random_choice] = new_positions[random_choice], new_positions[candidate]
             new_starters = set(p for p in new_positions if new_positions[p] not in
                             {'IL', 'BN'})
         return Roster(self.players, new_positions)
@@ -93,6 +135,26 @@ class Team(object):
     def roster(self, week=None):
         if self._roster is None:
             self._roster = get_roster(self.team_key, week=week)
+            if self.manager_name == 'George':
+                self._roster.positions = {
+                    self._roster.player_by_name("Tomas Satoransky"): "PG",
+                    self._roster.player_by_name("Mikal Bridges"): "SG",
+                    self._roster.player_by_name("Jimmy Butler"): "G",
+                    self._roster.player_by_name("Kelly Oubre Jr."): "SF",
+                    self._roster.player_by_name("Nikola Vucevic"): "PF",
+                    self._roster.player_by_name("Nikola Jokic"): "F",
+                    self._roster.player_by_name("Steven Adams"): "C",
+                    self._roster.player_by_name("Andre Drummond"): "C",
+                    self._roster.player_by_name("Mitchell Robinson"): "Util",
+                    self._roster.player_by_name("Montrezl Harrell"): "Util",
+                    self._roster.player_by_name("Goran Dragic"): "BN",
+                    self._roster.player_by_name("Jeff Teague"): "BN",
+                    self._roster.player_by_name("Kris Dunn"): "BN",
+                    self._roster.player_by_name("Thaddeus Young"): "BN",
+                    self._roster.player_by_name("Hassan Whiteside"): "BN",
+                    self._roster.player_by_name("Tristan Thompson"): "IL",
+                    self._roster.player_by_name("Boban Marjanovic"): "IL",
+                }
         return self._roster
 
     def set_roster(self, roster):

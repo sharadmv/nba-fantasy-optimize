@@ -22,25 +22,29 @@ def winning_prob(cats, points, scores, num_samples):
 def ev(cats, points, scores, num_samples):
     return points.mean()
 
+def print_roster(roster):
+    print(tabulate([
+        [position, player.name] for player, position in
+        roster.positions.items() if position not in {"BN", "IL"}
+    ]))
+
 @click.command()
 @click.option('--team1', type=str, default=None)
 @click.option('--team2', type=str, default=None)
-@click.option('--num_days', type=int, default=30)
+@click.option('--num_days', type=int, default=14)
 @click.option('--num_samples', type=int, default=50000)
 @click.option('--week', type=int, default=CURRENT_WEEK)
 @click.option('--num_fa', type=int, default=0)
+@click.option('--num_minimax', type=int, default=10)
 @click.option('--num_iters', type=int, default=100)
 @click.option('--ignore_player', type=str, multiple=True)
 @click.option('--half_life', type=float, default=14)
 @click.option('--metric', type=str, default='winning_probability')
 @click.option('--ignore_injured', is_flag=True)
-def main(team1, team2, num_days, num_samples, week, num_fa, num_iters,
+def main(team1, team2, num_days, num_samples, week, num_fa, num_minimax, num_iters,
          ignore_player, half_life, metric, ignore_injured):
     league = get_league()
     decay_rate = np.log(2) / half_life
-    # if week == 19: week = 18
-    # if week >= 19:
-        # week -= 1
     if team1 is None:
         team1 = league.current_team
     else:
@@ -49,7 +53,6 @@ def main(team1, team2, num_days, num_samples, week, num_fa, num_iters,
         team2 = league.get_matchup(team1, week=week)
     else:
         team2 = league.team_by_owner(team2)
-
     pyfiglet.print_figlet("%s vs. %s" % (team1.manager_name,
                                             team2.manager_name), font='banner',
                           width=160)
@@ -58,59 +61,49 @@ def main(team1, team2, num_days, num_samples, week, num_fa, num_iters,
         metric_fn = ev
     else:
         metric_fn = winning_prob
-    def roster_score(roster):
+    old_team1_roster = team1.roster(week=week)
+    old_team2_roster = team2.roster(week=week)
+    def team1_score(roster):
         cats, points, scores, _ = simulate_h2h(roster,
                             team2.roster(week=week),
                             num_days=num_days, num_samples=num_samples,
                             week=week, decay_rate=decay_rate)
         return metric_fn(cats, points, scores, num_samples)
-    def reverse_roster_score(roster):
+    def team2_score(roster):
         cats, points, scores, _ = simulate_h2h(roster,
                             team1.roster(week=week),
                             num_days=num_days, num_samples=num_samples,
                             week=week, decay_rate=decay_rate)
         return metric_fn(cats, points, scores, num_samples)
-    print("%s's roster:" % team1.manager_name, roster_score(team1.roster(week=week)))
-    print(tabulate([
-        [position, player.name] for player, position in
-        team1.roster(week=week).positions.items() if position not in {"BN", "IL"}
-    ]))
-    print("%s's roster:" % team2.manager_name, reverse_roster_score(team2.roster(week=week)))
-    print(tabulate([
-        [position, player.name] for player, position in
-        team2.roster(week=week).positions.items() if position not in {"BN", "IL"}
-    ]))
-    print("Optimizing %s's lineup" % team1.manager_name)
-    print("===========================================")
-    roster = team1.roster(week=week)
-    old_roster = roster
+    print("%s's roster:" % team1.manager_name, team1_score(old_team1_roster))
+    print_roster(old_team1_roster)
+    print("%s's roster:" % team2.manager_name, team2_score(old_team2_roster))
+    print_roster(old_team2_roster)
     print("Adding free agents:")
     for agent in get_free_agents(num_fa):
         print(agent.name)
-        roster = roster.add(agent, "BN")
-    team1.set_roster(roster)
+        old_team1_roster = old_team1_roster.add(agent, "BN")
+        # old_team2_roster = old_team2_roster.add(agent, "BN")
+    team1.set_roster(old_team1_roster)
+    team2.set_roster(old_team2_roster)
     print("Ignoring players:", ", ".join(ignore_player))
-    scores = []
-    for roster, score in simulated_annealing(roster, roster_score, ignore_players={team1.roster(week=week).player_by_name(n) for n in ignore_player},
-                                    num_steps=num_iters,
-                                    ignore_injured=ignore_injured):
-        scores.append(score)
-        # print(tabulate([
-            # [position, player.name] for player, position in
-            # roster.positions.items() if position not in {"BN", "IL"}
-        # ]))
-    print("%s's optimized roster:" % team1.manager_name, score)
-    print(tabulate([
-        [position, player.name] for player, position in
-        roster.positions.items() if position not in {"BN", "IL"}
-    ]))
+    for i in range(num_minimax):
+        for team, score_fn in zip([team2, team1], [team2_score, team1_score]):
+            roster = team.roster(week=week)
+            print("===========================================")
+            print("Minimax[%u]: %s" % (i + 1, team.manager_name))
+            for roster, score in simulated_annealing(roster, score_fn, ignore_players={roster.player_by_name(n) for n in ignore_player},
+                                            num_steps=num_iters,
+                                            ignore_injured=ignore_injured):
+                pass
+            print("%s's optimized roster:" % team.manager_name, score)
+            print(tabulate([
+                [position, player.name] for player, position in
+                roster.positions.items() if position not in {"BN", "IL"}
+            ]))
+            team.set_roster(roster)
 
-    def team_generator():
-        for r in [old_roster, roster]:
-            team1.set_roster(r)
-            yield team1
-
-    projections = visualize_matchup(team_generator(), team2,
+    projections = visualize_matchup([team1], team2,
                       num_days=num_days, num_samples=100000,
                       week=week, decay_rate=decay_rate,
                                     show_plots=False)
@@ -119,10 +112,7 @@ def main(team1, team2, num_days, num_samples, week, num_fa, num_iters,
         for i, team in enumerate([team1, team2]):
             print("===========================================")
             print("%s's projections:" % team.manager_name)
-            print(projections[1][i].round(2))
-    plt.figure()
-    plt.plot(scores)
-    plt.show()
+            print(projections[0][i].round(2))
 
 if __name__ == "__main__":
     main()
