@@ -4,22 +4,21 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
+jupyter = "*"
+jupyter-http-over-ws = "*"
+ipdb = "*"
 
 [packages]
-yahoo-fantasy-sport = {git = "https://github.com/josuebrunel/yahoo-fantasy-sport",editable = true}
-jupyter = "*"
-nba-matchup = {path = ".",editable = true}
-ipdb = "*"
+tensorflow-probability = "*"
+tensorflow = "*"
+nba-api = "*"
 pandas = "*"
-tqdm = "*"
-click = "*"
+nba-matchup = {editable = true,path = "."}
 matplotlib = "*"
 seaborn = "*"
-numpy = "*"
-beautifulsoup4 = "*"
-tabulate = "*"
-pyfiglet = "*"
 yaspin = "*"
+yahoo-fantasy-sport = {editable = true,git = "https://github.com/sharadmv/yahoo-fantasy-sport.git"}
+path-py = "*"
 
 [requires]
 python_version = "3.6"

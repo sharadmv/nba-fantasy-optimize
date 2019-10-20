@@ -3,12 +3,11 @@ import datetime
 import pandas as pd
 from yaspin import yaspin
 
-from .yfs import yfs, CURRENT_WEEK
-from .player import Player
-from .stats import get_stats
-from .util import valid_starters
+from nba_stats.yfs import yfs, CURRENT_WEEK
+from nba_stats.player import Player
+from nba_stats import model
 
-__all__ = ['get_teams']
+
 
 TEAM = {
     'G': 1,
@@ -51,6 +50,14 @@ class Roster(object):
 
     def add(self, player, position):
         return Roster(self.players + [player], {player: position, **self.positions})
+
+    def model(self, **kwargs):
+        player_data = [
+            player.games(**kwargs)
+            for player in self.players
+            if player.active
+        ]
+        return model.fit(*player_data)
 
     def random_swap(self, ignore_players=set(), ignore_injured=False):
         new_positions = self.positions.copy()
@@ -113,7 +120,7 @@ class Roster(object):
         games = [p.stats[1] for p in self]
         return stats, games
 
-class Team(object):
+class FantasyTeam(object):
 
     def __init__(self, team_key, team_id, name,
                  is_current_team,
@@ -132,29 +139,10 @@ class Team(object):
         self._roster = None
         self._stats = {}
 
+
     def roster(self, week=None):
         if self._roster is None:
             self._roster = get_roster(self.team_key, week=week)
-            if self.manager_name == 'George':
-                self._roster.positions = {
-                    self._roster.player_by_name("Tomas Satoransky"): "PG",
-                    self._roster.player_by_name("Mikal Bridges"): "SG",
-                    self._roster.player_by_name("Jimmy Butler"): "G",
-                    self._roster.player_by_name("Kelly Oubre Jr."): "SF",
-                    self._roster.player_by_name("Nikola Vucevic"): "PF",
-                    self._roster.player_by_name("Nikola Jokic"): "F",
-                    self._roster.player_by_name("Steven Adams"): "C",
-                    self._roster.player_by_name("Andre Drummond"): "C",
-                    self._roster.player_by_name("Mitchell Robinson"): "Util",
-                    self._roster.player_by_name("Montrezl Harrell"): "Util",
-                    self._roster.player_by_name("Goran Dragic"): "BN",
-                    self._roster.player_by_name("Jeff Teague"): "BN",
-                    self._roster.player_by_name("Kris Dunn"): "BN",
-                    self._roster.player_by_name("Thaddeus Young"): "BN",
-                    self._roster.player_by_name("Hassan Whiteside"): "BN",
-                    self._roster.player_by_name("Tristan Thompson"): "IL",
-                    self._roster.player_by_name("Boban Marjanovic"): "IL",
-                }
         return self._roster
 
     def set_roster(self, roster):
@@ -167,11 +155,11 @@ class Team(object):
 
     @classmethod
     def from_dict(cls, team_dict):
-        return Team(
+        return FantasyTeam(
             team_dict.get('team_key', None),
             team_dict.get('team_id', None),
             team_dict.get('name', None),
-            team_dict.get('is_owned_by_current_login', False),
+            bool(team_dict.get('is_owned_by_current_login', False)),
             team_dict.get('url', None),
             team_dict.get('waiver_priority', None),
             team_dict.get('manager_id', team_dict['managers'][0]['manager']['manager_id']),
@@ -180,12 +168,12 @@ class Team(object):
 
 
     def __str__(self):
-        return "Team<{name}>".format(
+        return "FantasyTeam<{name}>".format(
             name=self.name
         )
 
     def __repr__(self):
-        return "Team('{name}')".format(
+        return "FantasyTeam('{name}')".format(
             name=self.name
         )
 
@@ -201,7 +189,7 @@ def get_teams(league_key):
                 if isinstance(prop, dict):
                     for k, v in prop.items():
                         team_dict[k] = v
-            yield Team.from_dict(team_dict)
+            yield FantasyTeam.from_dict(team_dict)
 
 def get_roster(team_key, week=None):
     with yaspin(text="Fetching team rosters", color='cyan'):
