@@ -16,4 +16,4 @@ START_DATE = datetime.datetime.strptime(response['start_date'], "%Y-%m-%d").date
 while START_DATE.weekday() != 0:
     START_DATE -= datetime.timedelta(days=1)
 diff = datetime.datetime.today().date() - START_DATE
-CURRENT_WEEK = None #response.get('current_week', diff.days // 7)
+CURRENT_WEEK = response.get('current_week', None)

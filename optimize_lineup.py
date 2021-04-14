@@ -53,7 +53,8 @@ def main(team1, team2, num_days, num_samples, week, num_fa, num_iters,
     pyfiglet.print_figlet("%s vs. %s" % (team1.manager_name,
                                             team2.manager_name), font='banner',
                           width=160)
-    pyfiglet.print_figlet("Week %u" % week, font='big')
+    if week:
+        pyfiglet.print_figlet("Week %u" % week, font='big')
     if metric == 'ev':
         metric_fn = ev
     else:
