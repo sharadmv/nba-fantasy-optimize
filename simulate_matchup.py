@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import pyfiglet
 import click
 from tabulate import tabulate
 import logging
@@ -27,13 +28,20 @@ def main(team1, team2, num_days, num_samples, week, half_life):
         team2 = league.get_matchup(team1, week=week)
     else:
         team2 = league.team_by_owner(team2)
+    pyfiglet.print_figlet("%s vs. %s" % (team1.manager_name,
+                                            team2.manager_name), font='banner',
+                          width=160)
+    if week:
+        pyfiglet.print_figlet("Week %u" % week, font='big')
     print("Roster:")
     print_roster(team1.roster(week=week))
     print("Roster:")
     print_roster(team2.roster(week=week))
     projections = visualize_matchup([team1], team2, num_days=num_days, num_samples=num_samples,
                       week=week, decay_rate=decay_rate)
-    print(projections[0][0].round(2).to_csv())
+    #print(projections[0][0].round(2).to_csv())
+    print("Projections")
+    print("=====================")
     with pd.option_context('display.max_rows', None, 'display.max_columns', None):
         print(projections[0][0].round(2))
 

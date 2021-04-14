@@ -91,7 +91,7 @@ def get_stat_day(date, player_keys):
 
 
 SCHEDULE_URL = "https://sports.yahoo.com/site/api/resource/sports.team.schedule;count=250;sched_state_alias=current_with_postseason;team_key={team_key}"
-STATS_URL = "https://graphite-secure.sports.yahoo.com/v1/query/shangrila/gameLogBasketball?lang=en-US&playerId={player_key}&season=2018"
+STATS_URL = "https://graphite-secure.sports.yahoo.com/v1/query/shangrila/gameLogBasketball?lang=en-US&playerId={player_key}&season=2020"
 
 def get_all_stats(player_key, team_key, player_name):
     with yaspin(text="Getting stats for %s" % player_name, color='cyan'):
@@ -119,7 +119,8 @@ def get_all_stats(player_key, team_key, player_name):
         return games, dates
 
 def convert_stat(stat):
-    return Stats.from_dict(stat)
+    out = Stats.from_dict(stat)
+    return out
 
 def get_stats(players, base_date=datetime.date.today(), num_days=7, num_threads=10, week_length=7):
     player_info = [(p.player_key, p.team_key, p.name) for p in players]

@@ -19,7 +19,11 @@ def simulate_h2h(roster1, roster2, week=CURRENT_WEEK, num_days=14,
                  include_injured=False):
     teams = [roster1, roster2]
 
-    base = START_DATE + datetime.timedelta(days=7 * (week - 1) + 7)
+    diff = (datetime.datetime.today().date() - START_DATE).days // 7
+    if week is not None:
+        base = START_DATE + datetime.timedelta(days=7 * (week - 1) + 7)
+    else:
+        base = START_DATE + datetime.timedelta(weeks=diff)
     scores, projections = [], []
     week_length = 7 #14 if week == 18 else 7
     ignore = {'BN', 'IL'}

@@ -12,7 +12,8 @@ yfs = FantasySport(oauth, fmt='json')
 
 with yaspin(text="Fetching league data", color='cyan'):
     response = yfs.get_leagues([LEAGUE_KEY]).json()['fantasy_content']['leagues']['0']['league'][0]
-CURRENT_WEEK = response['current_week']
 START_DATE = datetime.datetime.strptime(response['start_date'], "%Y-%m-%d").date()
 while START_DATE.weekday() != 0:
     START_DATE -= datetime.timedelta(days=1)
+diff = datetime.datetime.today().date() - START_DATE
+CURRENT_WEEK = None #response.get('current_week', diff.days // 7)
