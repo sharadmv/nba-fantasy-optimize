@@ -15,7 +15,7 @@ It also optimizes your lineup using win probability as a score for a roster. It 
 # Installation
 First, clone this repo. Then run:
 ```bash
-$ pipenv install
+$ poetry install --lock
 ```
 That should handle the rest!
 

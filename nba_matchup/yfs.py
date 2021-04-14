@@ -5,7 +5,7 @@ from fantasy_sport import FantasySport
 
 __all__ = ['yfs', 'LEAGUE_KEY', 'CURRENT_WEEK', 'START_DATE']
 
-LEAGUE_KEY = "nba.l.160419"
+LEAGUE_KEY = "nba.l.51967"
 
 oauth = OAuth2(None, None, from_file='oauth.json', base_url='https://fantasysports.yahooapis.com/fantasy/v2/')
 yfs = FantasySport(oauth, fmt='json')

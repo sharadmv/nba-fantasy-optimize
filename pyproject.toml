@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "nba-fantasy-optimize"
+version = "0.1.0"
+description = ""
+authors = ["Sharad Vikram <sharad.vikram@gmail.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+jupyter = "^1.0.0"
+ipdb = "^0.13.7"
+pandas = "^1.2.4"
+tqdm = "^4.60.0"
+click = "^7.1.2"
+matplotlib = "^3.4.1"
+seaborn = "^0.11.1"
+numpy = "^1.20.2"
+beautifulsoup4 = "^4.9.3"
+tabulate = "^0.8.9"
+pyfiglet = "^0.8.post1"
+yaspin = "^1.5.0"
+yahoo-fantasy-sports = {git = "https://github.com/sharadmv/yahoo-fantasy-sport", develop = true}
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
