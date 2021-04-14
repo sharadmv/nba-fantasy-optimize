@@ -1,3 +1,4 @@
+import itertools as it
 from yaspin import yaspin
 import requests
 import pandas as pd
@@ -91,7 +92,7 @@ def get_stat_day(date, player_keys):
 
 
 SCHEDULE_URL = "https://sports.yahoo.com/site/api/resource/sports.team.schedule;count=250;sched_state_alias=current_with_postseason;team_key={team_key}"
-STATS_URL = "https://graphite-secure.sports.yahoo.com/v1/query/shangrila/gameLogBasketball?lang=en-US&playerId={player_key}&season=2020"
+STATS_URL = "https://graphite-secure.sports.yahoo.com/v1/query/shangrila/gameLogBasketball?lang=en-US&playerId={player_key}&season=2021"
 
 def get_all_stats(player_key, team_key, player_name):
     with yaspin(text="Getting stats for %s" % player_name, color='cyan'):
@@ -129,6 +130,7 @@ def get_stats(players, base_date=datetime.date.today(), num_days=7, num_threads=
     week_dates = set([base + datetime.timedelta(days=x) for x in range(week_length)])
     pool = Pool(num_threads)
     game_stats = pool.starmap(get_all_stats, player_info)
+    #game_stats = list(it.starmap(get_all_stats, player_info))
     date_stats, games = [], []
     for player, (stats, dates) in zip(players, game_stats):
         stats = {date: convert_stat(stat) for date, stat in stats.items() if date in

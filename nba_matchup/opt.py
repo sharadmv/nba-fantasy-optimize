@@ -23,7 +23,7 @@ def hill_climb(roster, score, num_steps = 1000, ignore_players=set(),
             yield roster, current_score
 
 def simulated_annealing(roster, score, num_steps = 1000, ignore_players=set(),
-               ignore_injured=False, anneal_start=1.0, anneal_decay=0.995):
+               ignore_injured=False, anneal_start=0.2, anneal_decay=0.990):
     current_score = score(roster)
     yield roster, current_score
     temperature = anneal_start

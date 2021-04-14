@@ -1,5 +1,6 @@
-import random
 import datetime
+import random
+
 import pandas as pd
 from yaspin import yaspin
 
