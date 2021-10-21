@@ -1,19 +1,52 @@
-from yaspin import yaspin
-import datetime
-from yahoo_oauth import OAuth2
-from fantasy_sport import FantasySport
+import dataclasses
+import functools
+import pathlib
 
-__all__ = ['yfs', 'LEAGUE_KEY', 'CURRENT_WEEK', 'START_DATE']
+from typing import Optional, Union
 
-LEAGUE_KEY = "nba.l.51967"
+import yaml
+import yaspin
+import yfpy
 
-oauth = OAuth2(None, None, from_file='oauth.json', base_url='https://fantasysports.yahooapis.com/fantasy/v2/')
-yfs = FantasySport(oauth, fmt='json')
+@dataclasses.dataclass
+class YFS:
+  config_dir: Union[pathlib.Path, str]
 
-with yaspin(text="Fetching league data", color='cyan'):
-    response = yfs.get_leagues([LEAGUE_KEY]).json()['fantasy_content']['leagues']['0']['league'][0]
-START_DATE = datetime.datetime.strptime(response['start_date'], "%Y-%m-%d").date()
-while START_DATE.weekday() != 0:
-    START_DATE -= datetime.timedelta(days=1)
-diff = datetime.datetime.today().date() - START_DATE
-CURRENT_WEEK = response.get('current_week', None)
+  def __post_init__(self):
+    self.config_dir = pathlib.Path(self.config_dir)
+    with (self.config_dir / 'league.yaml').open('r') as fp:
+      league_config = yaml.safe_load(fp)
+
+    self._yfs = yfpy.YahooFantasySportsQuery(
+      self.config_dir,
+      league_id=str(league_config['league_id']),
+      game_code=league_config['game_code'])
+
+  @functools.cached_property
+  def league(self) -> yfpy.League:
+    with yaspin.yaspin('Loading league info'):
+      return self._yfs.get_league_info()
+
+  @functools.cached_property
+  def current_user(self) -> yfpy.User:
+    with yaspin.yaspin('Loading user info'):
+      return self._yfs.get_current_user()
+
+  @functools.cached_property
+  def current_team(self) -> yfpy.Team:
+    for team in self.league.teams_ordered_by_standings:
+      team = team['team']
+      managers = (team.managers if isinstance(team.managers, list) else
+          [team.managers])
+      for manager in managers:
+        manager = manager['manager']
+        if manager.guid == self.current_user.guid:
+          return team
+    raise ValueError('Couldn\'t find current team.')
+
+  def get_roster(self, *, team_id: Optional[str] = None, week: Optional[int] =
+      None) -> yfpy.models.Roster:
+    team_id = team_id or self.current_team.team_id
+    week = week or self.league.current_week
+    return self._yfs.get_team_roster_by_week(team_id, chosen_week=week)
+

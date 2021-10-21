@@ -1,29 +1,35 @@
+import dataclasses
+
+from typing import List
+
 from yaspin import yaspin
 
 from .yfs import yfs, LEAGUE_KEY, CURRENT_WEEK
 from .team import get_teams
 
-class League(object):
+@dataclasses.dataclass
+class League:
+  teams: List['Team']
 
-    def __init__(self, teams):
-        self.teams = teams
-        self.team_map = {
-            t.team_key: t for t in self.teams
-        }
-        self.matchups = {}
-        self.current_team = [t for t in teams if t.is_current_team][0]
+  def __post_init__(self, teams):
+    self.teams = teams
+    self.team_map = {
+        t.team_key: t for t in self.teams
+    }
+    self.matchups = {}
+    self.current_team = [t for t in teams if t.is_current_team][0]
 
     def team_by_owner(self, owner):
-        for team in self.teams:
-            if team.manager_name == owner:
-                return team
+      for team in self.teams:
+        if team.manager_name == owner:
+          return team
 
     def get_matchup(self, team, week=CURRENT_WEEK):
-        if (team.team_key, week) not in self.matchups:
-            matchups = get_matchups(team.team_key)
-            for w, team_key in matchups:
-                self.matchups[team.team_key, w] = self.team_map[team_key]
-        return self.matchups[team.team_key, week]
+      if (team.team_key, week) not in self.matchups:
+          matchups = get_matchups(team.team_key)
+          for w, team_key in matchups:
+              self.matchups[team.team_key, w] = self.team_map[team_key]
+      return self.matchups[team.team_key, week]
 
 def get_league(league_key=LEAGUE_KEY):
     teams = get_teams(league_key)
