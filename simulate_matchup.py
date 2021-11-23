@@ -44,6 +44,9 @@ def main(team1, team2, num_days, num_samples, week, half_life):
     print("=====================")
     with pd.option_context('display.max_rows', None, 'display.max_columns', None):
         print(projections[0][0].round(2))
+    print("=====================")
+    with pd.option_context('display.max_rows', None, 'display.max_columns', None):
+        print(projections[0][1].round(2))
 
 if __name__ == "__main__":
     main()

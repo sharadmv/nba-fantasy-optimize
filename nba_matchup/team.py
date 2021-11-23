@@ -136,26 +136,6 @@ class Team(object):
     def roster(self, week=None):
         if self._roster is None:
             self._roster = get_roster(self.team_key, week=week)
-            if self.manager_name == 'George':
-                self._roster.positions = {
-                    self._roster.player_by_name("Tomas Satoransky"): "PG",
-                    self._roster.player_by_name("Mikal Bridges"): "SG",
-                    self._roster.player_by_name("Jimmy Butler"): "G",
-                    self._roster.player_by_name("Kelly Oubre Jr."): "SF",
-                    self._roster.player_by_name("Nikola Vucevic"): "PF",
-                    self._roster.player_by_name("Nikola Jokic"): "F",
-                    self._roster.player_by_name("Steven Adams"): "C",
-                    self._roster.player_by_name("Andre Drummond"): "C",
-                    self._roster.player_by_name("Mitchell Robinson"): "Util",
-                    self._roster.player_by_name("Montrezl Harrell"): "Util",
-                    self._roster.player_by_name("Goran Dragic"): "BN",
-                    self._roster.player_by_name("Jeff Teague"): "BN",
-                    self._roster.player_by_name("Kris Dunn"): "BN",
-                    self._roster.player_by_name("Thaddeus Young"): "BN",
-                    self._roster.player_by_name("Hassan Whiteside"): "BN",
-                    self._roster.player_by_name("Tristan Thompson"): "IL",
-                    self._roster.player_by_name("Boban Marjanovic"): "IL",
-                }
         return self._roster
 
     def set_roster(self, roster):
